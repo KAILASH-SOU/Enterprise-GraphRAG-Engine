@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+sqlalchemy
+asyncpg
+greenlet
+neo4j
+qdrant-client
+celery
+redis
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+openai
