@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Send, Bot, User, Share2, Search, Database } from 'lucide-react';
 
+const API_URL = 'http://localhost:8000';
+
 const ChatInterface = () => {
   const [messages, setMessages] = useState([
     {
@@ -12,28 +14,53 @@ const ChatInterface = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
     
     const userMsg = { id: Date.now().toString(), role: 'user', content: input };
     setMessages(prev => [...prev, userMsg]);
+    const currentInput = input;
     setInput('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      const isGraphQuery = userMsg.content.toLowerCase().includes('who') || userMsg.content.toLowerCase().includes('connect');
-      const assistantMsg = {
+    try {
+      const response = await fetch(`${API_URL}/api/query`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: currentInput,
+          tenant_id: 'tenant_123'
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const assistantMsg = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: data.answer,
+          sources: [
+            { type: data.routing_strategy === 'GRAPH_TRAVERSAL' ? 'graph' : 'vector', text: `Strategy: ${data.routing_strategy}` },
+            { type: 'graph', text: `Reasoning: ${data.reasoning}` }
+          ]
+        };
+        setMessages(prev => [...prev, assistantMsg]);
+      } else {
+        throw new Error('API request failed');
+      }
+    } catch (error) {
+      console.error('Error querying agent:', error);
+      const errorMsg = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `Based on the synthesis of your tenant's data, here is the answer to "${userMsg.content}". I've utilized a ${isGraphQuery ? 'HYBRID' : 'VECTOR_SEARCH'} routing strategy to retrieve this context.`,
-        sources: [
-          { type: 'vector', text: 'Document Chunk #421 from Q3_Financial_Report.pdf' },
-          ...(isGraphQuery ? [{ type: 'graph', text: '(Acme Corp)-[OWNS]->(Subsidiary A)-[LOCATED_IN]->(London)' }] : [])
-        ]
+        content: "I'm sorry, I encountered an error connecting to the backend. Please ensure the backend is running.",
       };
-      setMessages(prev => [...prev, assistantMsg]);
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -61,7 +88,7 @@ const ChatInterface = () => {
               </div>
               {msg.sources && (
                 <div className="mt-3 flex flex-col gap-2 w-full max-w-lg">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Sources</span>
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Sources & Reasoning</span>
                   {msg.sources.map((src, idx) => (
                     <div key={idx} className="flex items-start gap-2 bg-gray-900/50 p-2 rounded-lg border border-gray-800 text-xs text-gray-400 shadow-sm">
                       {src.type === 'vector' ? <Database className="w-4 h-4 text-blue-400 shrink-0" /> : <Share2 className="w-4 h-4 text-emerald-400 shrink-0" />}

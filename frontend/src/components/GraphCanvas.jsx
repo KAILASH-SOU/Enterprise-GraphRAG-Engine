@@ -1,23 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
-import { Network, Maximize2, Filter } from 'lucide-react';
+import { Network, Maximize2, Filter, Loader2 } from 'lucide-react';
 
-const mockData = {
-  nodes: [
-    { id: 'Alice', group: 'PERSON', val: 2 },
-    { id: 'Bob', group: 'PERSON', val: 2 },
-    { id: 'Acme Corp', group: 'ORGANIZATION', val: 4 },
-    { id: 'Project X', group: 'PROJECT', val: 3 },
-    { id: 'London', group: 'LOCATION', val: 2 },
-  ],
-  links: [
-    { source: 'Alice', target: 'Acme Corp', label: 'WORKS_FOR' },
-    { source: 'Bob', target: 'Acme Corp', label: 'WORKS_FOR' },
-    { source: 'Alice', target: 'Project X', label: 'LEADS' },
-    { source: 'Bob', target: 'Project X', label: 'CONTRIBUTES_TO' },
-    { source: 'Acme Corp', target: 'London', label: 'HQ_LOCATED_IN' },
-  ]
-};
+const API_URL = 'http://localhost:8000';
 
 const getColor = (group) => {
   switch (group) {
@@ -25,7 +10,7 @@ const getColor = (group) => {
     case 'ORGANIZATION': return '#10B981';
     case 'PROJECT': return '#F59E0B';
     case 'LOCATION': return '#8B5CF6';
-    default: return '#9CA3AF';
+    default: return '#9CA3AF'; // Default fallback color for unknown labels
   }
 };
 
@@ -33,6 +18,30 @@ const GraphCanvas = () => {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [selectedNode, setSelectedNode] = useState(null);
+  const [graphData, setGraphData] = useState({ nodes: [], links: [] });
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch graph data from the backend
+  useEffect(() => {
+    const fetchGraphData = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/graph?tenant_id=tenant_123`);
+        if (response.ok) {
+          const data = await response.json();
+          setGraphData(data);
+        }
+      } catch (err) {
+        console.error('Error fetching graph data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGraphData();
+    // Optional: Poll every 10 seconds to update graph if documents are being processed
+    const interval = setInterval(fetchGraphData, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (containerRef.current) {
@@ -57,52 +66,66 @@ const GraphCanvas = () => {
 
   return (
     <div className="flex h-full w-full relative">
-      <div ref={containerRef} className="flex-1 bg-[#0B0F19]">
-        <ForceGraph2D
-          width={dimensions.width}
-          height={dimensions.height}
-          graphData={mockData}
-          nodeLabel="id"
-          nodeColor={node => getColor(node.group)}
-          nodeRelSize={6}
-          linkColor={() => 'rgba(255,255,255,0.2)'}
-          linkDirectionalArrowLength={3.5}
-          linkDirectionalArrowRelPos={1}
-          onNodeClick={(node) => setSelectedNode(node)}
-          linkCanvasObjectMode={() => 'after'}
-          linkCanvasObject={(link, ctx, globalScale) => {
-            const MAX_FONT_SIZE = 4;
-            const label = link.label;
-            const fontSize = MAX_FONT_SIZE;
-            ctx.font = `${fontSize}px Sans-Serif`;
-            const textWidth = ctx.measureText(label).width;
-            const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
+      <div ref={containerRef} className="flex-1 bg-[#0B0F19] flex items-center justify-center">
+        {isLoading ? (
+          <div className="flex flex-col items-center gap-4">
+             <Loader2 className="w-12 h-12 text-primary animate-spin" />
+             <p className="text-gray-400 font-medium tracking-wide">Querying Neo4j Graph...</p>
+          </div>
+        ) : graphData.nodes.length === 0 ? (
+          <div className="flex flex-col items-center gap-4">
+             <Network className="w-12 h-12 text-gray-600" />
+             <p className="text-gray-500 font-medium tracking-wide">No entities found. Upload a document to start extracting the knowledge graph.</p>
+          </div>
+        ) : (
+          <ForceGraph2D
+            width={dimensions.width}
+            height={dimensions.height}
+            graphData={graphData}
+            nodeLabel="id"
+            nodeColor={node => getColor(node.group)}
+            nodeRelSize={6}
+            linkColor={() => 'rgba(255,255,255,0.2)'}
+            linkDirectionalArrowLength={3.5}
+            linkDirectionalArrowRelPos={1}
+            onNodeClick={(node) => setSelectedNode(node)}
+            linkCanvasObjectMode={() => 'after'}
+            linkCanvasObject={(link, ctx, globalScale) => {
+              const MAX_FONT_SIZE = 4;
+              const label = link.label;
+              if (!label) return;
+              
+              const fontSize = MAX_FONT_SIZE;
+              ctx.font = `${fontSize}px Sans-Serif`;
+              const textWidth = ctx.measureText(label).width;
+              const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
 
-            ctx.save();
-            if (link.source.x !== undefined && link.target.x !== undefined) {
-              const x = link.source.x + (link.target.x - link.source.x) / 2;
-              const y = link.source.y + (link.target.y - link.source.y) / 2;
-              
-              ctx.translate(x, y);
-              
-              const angle = Math.atan2(link.target.y - link.source.y, link.target.x - link.source.x);
-              let drawAngle = angle;
-              if (drawAngle > Math.PI / 2 || drawAngle < -Math.PI / 2) {
-                drawAngle += Math.PI;
+              ctx.save();
+              if (link.source.x !== undefined && link.target.x !== undefined) {
+                const x = link.source.x + (link.target.x - link.source.x) / 2;
+                const y = link.source.y + (link.target.y - link.source.y) / 2;
+                
+                ctx.translate(x, y);
+                
+                const angle = Math.atan2(link.target.y - link.source.y, link.target.x - link.source.x);
+                let drawAngle = angle;
+                if (drawAngle > Math.PI / 2 || drawAngle < -Math.PI / 2) {
+                  drawAngle += Math.PI;
+                }
+                ctx.rotate(drawAngle);
+
+                ctx.fillStyle = 'rgba(11, 15, 25, 0.8)';
+                ctx.fillRect(-bckgDimensions[0] / 2, -bckgDimensions[1] / 2, bckgDimensions[0], bckgDimensions[1]);
+
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.fillText(label, 0, 0);
               }
-              ctx.rotate(drawAngle);
-
-              ctx.fillStyle = 'rgba(11, 15, 25, 0.8)';
-              ctx.fillRect(-bckgDimensions[0] / 2, -bckgDimensions[1] / 2, bckgDimensions[0], bckgDimensions[1]);
-
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-              ctx.fillText(label, 0, 0);
-            }
-            ctx.restore();
-          }}
-        />
+              ctx.restore();
+            }}
+          />
+        )}
       </div>
 
       {/* Floating UI Elements */}
