@@ -1,15 +1,8 @@
 import React, { useState } from 'react';
 import { Send, Bot, User, Share2, Search, Database } from 'lucide-react';
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  sources?: { type: 'vector' | 'graph', text: string }[];
-}
-
 const ChatInterface = () => {
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState([
     {
       id: '1',
       role: 'assistant',
@@ -22,20 +15,20 @@ const ChatInterface = () => {
   const handleSend = () => {
     if (!input.trim()) return;
     
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input };
+    const userMsg = { id: Date.now().toString(), role: 'user', content: input };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
 
     setTimeout(() => {
       const isGraphQuery = userMsg.content.toLowerCase().includes('who') || userMsg.content.toLowerCase().includes('connect');
-      const assistantMsg: Message = {
+      const assistantMsg = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: `Based on the synthesis of your tenant's data, here is the answer to "${userMsg.content}". I've utilized a ${isGraphQuery ? 'HYBRID' : 'VECTOR_SEARCH'} routing strategy to retrieve this context.`,
         sources: [
           { type: 'vector', text: 'Document Chunk #421 from Q3_Financial_Report.pdf' },
-          ...(isGraphQuery ? [{ type: 'graph' as const, text: '(Acme Corp)-[OWNS]->(Subsidiary A)-[LOCATED_IN]->(London)' }] : [])
+          ...(isGraphQuery ? [{ type: 'graph', text: '(Acme Corp)-[OWNS]->(Subsidiary A)-[LOCATED_IN]->(London)' }] : [])
         ]
       };
       setMessages(prev => [...prev, assistantMsg]);

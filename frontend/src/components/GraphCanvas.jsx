@@ -19,7 +19,7 @@ const mockData = {
   ]
 };
 
-const getColor = (group: string) => {
+const getColor = (group) => {
   switch (group) {
     case 'PERSON': return '#3B82F6';
     case 'ORGANIZATION': return '#10B981';
@@ -30,9 +30,9 @@ const getColor = (group: string) => {
 };
 
 const GraphCanvas = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
-  const [selectedNode, setSelectedNode] = useState<any>(null);
+  const [selectedNode, setSelectedNode] = useState(null);
 
   useEffect(() => {
     if (containerRef.current) {
@@ -63,14 +63,14 @@ const GraphCanvas = () => {
           height={dimensions.height}
           graphData={mockData}
           nodeLabel="id"
-          nodeColor={node => getColor(node.group as string)}
+          nodeColor={node => getColor(node.group)}
           nodeRelSize={6}
           linkColor={() => 'rgba(255,255,255,0.2)'}
           linkDirectionalArrowLength={3.5}
           linkDirectionalArrowRelPos={1}
           onNodeClick={(node) => setSelectedNode(node)}
           linkCanvasObjectMode={() => 'after'}
-          linkCanvasObject={(link: any, ctx, globalScale) => {
+          linkCanvasObject={(link, ctx, globalScale) => {
             const MAX_FONT_SIZE = 4;
             const label = link.label;
             const fontSize = MAX_FONT_SIZE;

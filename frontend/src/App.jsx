@@ -5,7 +5,7 @@ import GraphCanvas from './components/GraphCanvas';
 import { Database, MessageSquare, Network } from 'lucide-react';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'chat' | 'documents' | 'graph'>('chat');
+  const [activeTab, setActiveTab] = useState('chat');
 
   return (
     <div className="flex h-screen bg-background font-sans text-gray-100 overflow-hidden">
