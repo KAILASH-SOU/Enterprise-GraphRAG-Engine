@@ -5,6 +5,7 @@ const API_URL = 'http://localhost:8000';
 
 const DocumentManager = () => {
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
   const [docs, setDocs] = useState([]);
   const fileInputRef = useRef(null);
 
@@ -38,6 +39,7 @@ const DocumentManager = () => {
     if (!file) return;
 
     setIsUploading(true);
+    setUploadError(null);
     const formData = new FormData();
     formData.append('file', file);
     formData.append('tenant_id', 'tenant_123'); // Default tenant
@@ -53,9 +55,11 @@ const DocumentManager = () => {
         fetchDocuments();
       } else {
         console.error('Upload failed');
+        setUploadError(`Upload failed with status: ${response.status}`);
       }
     } catch (err) {
       console.error('Error uploading file:', err);
+      setUploadError(`Error connecting to backend: ${err.message}`);
     } finally {
       setIsUploading(false);
       // Reset input so the same file can be uploaded again if needed
@@ -96,6 +100,12 @@ const DocumentManager = () => {
           Supports PDF, Markdown, TXT, and CSV. Documents are automatically chunked, embedded into Qdrant, and processed into Neo4j graph nodes via Celery workers.
         </p>
       </div>
+
+      {uploadError && (
+        <div className="mb-8 p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-400 text-sm">
+          {uploadError}
+        </div>
+      )}
 
       <div className="flex-1">
         <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">

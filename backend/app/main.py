@@ -38,7 +38,7 @@ app = FastAPI(title="Enterprise GraphRAG Engine", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], # Allow all for local dev
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -63,7 +63,14 @@ async def upload_document(
 ):
     doc_id = str(uuid.uuid4())
     content = await file.read()
-    text = content.decode("utf-8")
+    
+    if file.filename.lower().endswith(".pdf"):
+        import io
+        from pypdf import PdfReader
+        pdf = PdfReader(io.BytesIO(content))
+        text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+    else:
+        text = content.decode("utf-8")
     
     # Record document
     doc_record = {

@@ -13,3 +13,4 @@ python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
 openai
+pypdf
