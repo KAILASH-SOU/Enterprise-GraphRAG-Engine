@@ -1,0 +1,6 @@
+streamlit
+requests
+pandas
+plotly
+networkx
+streamlit-agraph

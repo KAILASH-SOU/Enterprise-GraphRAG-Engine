@@ -14,3 +14,10 @@ passlib[bcrypt]
 python-multipart
 openai
 pypdf
+igraph
+leidenalg
+streamlit
+networkx
+scikit-learn
+numpy
+pandas
