@@ -11,7 +11,6 @@ from typing import Dict, Any, List
 # Page config
 st.set_page_config(
     page_title="Enterprise GraphRAG Engine",
-    page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -135,7 +134,7 @@ def load_stats():
 
 # Sidebar
 with st.sidebar:
-    st.markdown('<div class="main-header">🧠 GraphRAG Engine</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">GraphRAG Engine</div>', unsafe_allow_html=True)
     
     # Tenant selection
     st.session_state.tenant_id = st.text_input(
@@ -149,7 +148,7 @@ with st.sidebar:
     # Navigation
     page = st.radio(
         "Navigation",
-        ["💬 Chat", "📄 Documents", "🕸️ Graph Explorer", "🏘️ Communities", "🔍 Multi-hop Reasoning", "📊 Stats"],
+        ["Chat", "Documents", "Graph Explorer", "Communities", "Multi-hop Reasoning", "Stats"],
         label_visibility="collapsed"
     )
     
@@ -157,26 +156,26 @@ with st.sidebar:
     
     # Quick actions
     st.markdown("### Quick Actions")
-    if st.button("🔄 Refresh All Data"):
+    if st.button("Refresh All Data"):
         load_documents()
         load_graph()
         load_communities()
         load_stats()
         st.success("Data refreshed!")
     
-    if st.button("🏗️ Rebuild Communities"):
+    if st.button("Rebuild Communities"):
         result = api_post("/api/communities/rebuild", {"tenant_id": st.session_state.tenant_id})
         if result:
             st.success(f"Community rebuild started: {result.get('task_id', '')}")
     
-    if st.button("🔗 Resolve Entities"):
+    if st.button("Resolve Entities"):
         result = api_post("/api/entities/resolve", {"tenant_id": st.session_state.tenant_id})
         if result:
             st.success(f"Entity resolution started: {result.get('task_id', '')}")
 
 # Main content
-if page == "💬 Chat":
-    st.markdown('<div class="main-header">💬 GraphRAG Chat</div>', unsafe_allow_html=True)
+if page == "Chat":
+    st.markdown('<div class="main-header">GraphRAG Chat</div>', unsafe_allow_html=True)
     st.markdown("Ask questions about your documents. The system automatically routes to vector search, graph traversal, or community summaries.")
     
     # Display chat history
@@ -217,11 +216,11 @@ if page == "💬 Chat":
             })
         st.rerun()
 
-elif page == "📄 Documents":
-    st.markdown('<div class="main-header">📄 Document Management</div>', unsafe_allow_html=True)
+elif page == "Documents":
+    st.markdown('<div class="main-header">Document Management</div>', unsafe_allow_html=True)
     
     # Upload section
-    with st.expander("📤 Upload New Document", expanded=True):
+    with st.expander("Upload New Document", expanded=True):
         uploaded_file = st.file_uploader(
             "Choose a file",
             type=["pdf", "txt", "md"],
@@ -241,7 +240,7 @@ elif page == "📄 Documents":
                     st.rerun()
     
     # Document list
-    st.markdown('<div class="sub-header">📋 Document List</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-header">Document List</div>', unsafe_allow_html=True)
     
     if st.button("Refresh Documents"):
         load_documents()
@@ -257,14 +256,14 @@ elif page == "📄 Documents":
     else:
         st.info("No documents uploaded yet. Upload a document to get started.")
 
-elif page == "🕸️ Graph Explorer":
-    st.markdown('<div class="main-header">🕸️ Knowledge Graph Explorer</div>', unsafe_allow_html=True)
+elif page == "Graph Explorer":
+    st.markdown('<div class="main-header">Knowledge Graph Explorer</div>', unsafe_allow_html=True)
     
     col1, col2 = st.columns([3, 1])
     
     with col2:
         st.markdown("### Graph Controls")
-        if st.button("🔄 Load Graph"):
+        if st.button("Load Graph"):
             with st.spinner("Loading graph..."):
                 load_graph()
             st.success(f"Loaded {len(st.session_state.graph_data.get('nodes', []))} nodes, {len(st.session_state.graph_data.get('links', []))} edges")
@@ -309,14 +308,14 @@ elif page == "🕸️ Graph Explorer":
         else:
             st.info("Click 'Load Graph' to visualize the knowledge graph")
 
-elif page == "🏘️ Communities":
-    st.markdown('<div class="main-header">🏘️ Hierarchical Communities</div>', unsafe_allow_html=True)
+elif page == "Communities":
+    st.markdown('<div class="main-header">Hierarchical Communities</div>', unsafe_allow_html=True)
     st.markdown("Leiden community detection with hierarchical summaries for global query answering.")
     
     col1, col2 = st.columns([2, 1])
     
     with col2:
-        if st.button("🔄 Load Communities"):
+        if st.button("Load Communities"):
             with st.spinner("Loading communities..."):
                 load_communities()
             st.success(f"Loaded {len(st.session_state.communities)} communities")
@@ -349,8 +348,8 @@ elif page == "🏘️ Communities":
         else:
             st.info("No communities loaded. Click 'Load Communities' or 'Rebuild Communities' in sidebar.")
 
-elif page == "🔍 Multi-hop Reasoning":
-    st.markdown('<div class="main-header">🔍 Multi-hop Reasoning</div>', unsafe_allow_html=True)
+elif page == "Multi-hop Reasoning":
+    st.markdown('<div class="main-header">Multi-hop Reasoning</div>', unsafe_allow_html=True)
     st.markdown("Perform iterative graph traversal with LLM-scored paths and cross-document retrieval.")
     
     with st.form("multi_hop_form"):
@@ -392,10 +391,10 @@ elif page == "🔍 Multi-hop Reasoning":
                 for chunk in result["cross_document_chunks"][:3]:
                     st.markdown(f"- {chunk.get('text', '')[:300]}...")
 
-elif page == "📊 Stats":
-    st.markdown('<div class="main-header">📊 System Statistics</div>', unsafe_allow_html=True)
+elif page == "Stats":
+    st.markdown('<div class="main-header">System Statistics</div>', unsafe_allow_html=True)
     
-    if st.button("🔄 Refresh Stats"):
+    if st.button("Refresh Stats"):
         load_stats()
         st.rerun()
     
@@ -437,7 +436,7 @@ elif page == "📊 Stats":
         st.divider()
         
         # Entity list
-        st.markdown('<div class="sub-header">🔍 Entity Browser</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sub-header">Entity Browser</div>', unsafe_allow_html=True)
         entity_label = st.selectbox("Filter by label", ["All", "PERSON", "ORGANIZATION", "CONCEPT", "LOCATION", "EVENT"])
         
         if st.button("Load Entities"):
