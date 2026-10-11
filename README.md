@@ -40,53 +40,7 @@ An enterprise-grade Retrieval-Augmented Generation (RAG) platform built for comp
 └──────────────┘      └─────────────────┘             └─────────────────┘     └──────────────┘
 ```
 
-```mermaid
-flowchart TD
-    User["User Query / Upload"] --> UI["Streamlit Frontend (UI)"]
-    UI --> API["FastAPI Backend (API Gateway)"]
 
-    subgraph BackendOrchestration ["Core Backend Services"]
-        Router["Agentic Router (GPT-4o Intent Classifier)"]
-        Middleware["Cypher AST Middleware (Tenant Guard)"]
-        MultiHop["Multi-Hop Reasoner (Iterative Deepening)"]
-    end
-
-    API --> Router
-    API --> Middleware
-
-    Router -->|"Factual (Cosine)"| Qdrant[("Qdrant Vector DB")]
-    Router -->|"Relational (Hops)"| MultiHop
-    Router -->|"Global Summary"| Neo4j[("Neo4j Knowledge Graph")]
-
-    MultiHop -->|"Seed Entities"| Qdrant
-    MultiHop -->|"Path Traversal"| Neo4j
-    Middleware -->|"Tenant Injected Cypher"| Neo4j
-
-    API -->|"Dispatch Jobs"| Redis[("Redis Broker & Backend")]
-    Redis --> Workers["Celery Worker Pool"]
-
-    subgraph BackgroundTasks ["Asynchronous Pipelines"]
-        DocIngest["Document Ingestion & Chunking"]
-        EntityRes["Entity Resolution (Vector + LLM Judge)"]
-        CommunityDet["Hierarchical Leiden Clustering"]
-    end
-
-    Workers --> DocIngest
-    Workers --> EntityRes
-    Workers --> CommunityDet
-
-    DocIngest --> Qdrant
-    DocIngest --> Neo4j
-    EntityRes --> Neo4j
-    CommunityDet --> Neo4j
-    API --> PG[("PostgreSQL (Metadata)")]
-
-    LLM["OpenAI API (GPT-4o)"]
-    Router -.-> LLM
-    MultiHop -.-> LLM
-    EntityRes -.-> LLM
-    CommunityDet -.-> LLM
-```
 
 ---
 
